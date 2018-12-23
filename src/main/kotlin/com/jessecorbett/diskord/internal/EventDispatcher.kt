@@ -2,150 +2,61 @@ package com.jessecorbett.diskord.internal
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.treeToValue
-import com.jessecorbett.diskord.EventListener
-import com.jessecorbett.diskord.api.Channel
-import com.jessecorbett.diskord.api.Guild
-import com.jessecorbett.diskord.api.Message
-import com.jessecorbett.diskord.api.User
-import com.jessecorbett.diskord.api.gateway.events.*
-import com.jessecorbett.diskord.api.models.BulkMessageDelete
-import com.jessecorbett.diskord.api.models.MessageDelete
-import com.jessecorbett.diskord.api.models.VoiceState
+import com.jessecorbett.diskord.*
+import com.jessecorbett.diskord.api.gateway.events.DiscordEvent
+import com.jessecorbett.diskord.event.*
+import com.jessecorbett.diskord.event.EventData
+
+private data class EventContext(val eventListener: EventListener, val event: DiscordEvent, val data: JsonNode)
+
+@Suppress("REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE")
+private suspend inline fun <reified T, reified V: EventData> fireEvent(
+        ctx: EventContext,
+        eventFunction: suspend (T) -> Unit,
+        dataFunction: (T) -> V
+) {
+    val data = jsonMapper.treeToValue<T>(ctx.data)
+    eventFunction(data)
+    ctx.eventListener.onEvent(ctx.event, dataFunction(data))
+}
 
 suspend fun dispatchEvent(eventListener: EventListener, event: DiscordEvent, data: JsonNode) {
     eventListener.onEvent(event)
+
+    val ctx = EventContext(eventListener, event, data)
     when (event) {
-        DiscordEvent.READY -> {
-            val readyData = jsonMapper.treeToValue<Ready>(data)
-            eventListener.onReady(readyData)
-        }
-        DiscordEvent.RESUMED -> {
-            val resumedData = jsonMapper.treeToValue<Resumed>(data)
-            eventListener.onResumed(resumedData)
-        }
-        DiscordEvent.CHANNEL_CREATE -> {
-            val channel = jsonMapper.treeToValue<Channel>(data)
-            eventListener.onChannelCreate(channel)
-        }
-        DiscordEvent.CHANNEL_UPDATE -> {
-            val channel = jsonMapper.treeToValue<Channel>(data)
-            eventListener.onChannelUpdate(channel)
-        }
-        DiscordEvent.CHANNEL_DELETE -> {
-            val channel = jsonMapper.treeToValue<Channel>(data)
-            eventListener.onChannelDelete(channel)
-        }
-        DiscordEvent.CHANNEL_PINS_UPDATE -> {
-            val pinUpdate = jsonMapper.treeToValue<ChannelPinUpdate>(data)
-            eventListener.onChannelPinsUpdate(pinUpdate)
-        }
-        DiscordEvent.GUILD_CREATE -> {
-            val guildCreateData = jsonMapper.treeToValue<CreatedGuild>(data)
-            eventListener.onGuildCreate(guildCreateData)
-        }
-        DiscordEvent.GUILD_UPDATE -> {
-            val guild = jsonMapper.treeToValue<Guild>(data)
-            eventListener.onGuildUpdate(guild)
-        }
-        DiscordEvent.GUILD_DELETE -> {
-            val guild = jsonMapper.treeToValue<Guild>(data)
-            eventListener.onGuildDelete(guild)
-        }
-        DiscordEvent.GUILD_BAN_ADD -> {
-            val ban = jsonMapper.treeToValue<GuildBan>(data)
-            eventListener.onGuildBanAdd(ban)
-        }
-        DiscordEvent.GUILD_BAN_REMOVE -> {
-            val ban = jsonMapper.treeToValue<GuildBan>(data)
-            eventListener.onGuildBanRemove(ban)
-        }
-        DiscordEvent.GUILD_EMOJIS_UPDATE -> {
-            val emojiUpdate = jsonMapper.treeToValue<GuildEmojiUpdate>(data)
-            eventListener.onGuildEmojiUpdate(emojiUpdate)
-        }
-        DiscordEvent.GUILD_INTEGRATIONS_UPDATE -> {
-            val integrationUpdate = jsonMapper.treeToValue<GuildIntegrationUpdate>(data)
-            eventListener.onGuildIntegrationsUpdate(integrationUpdate)
-        }
-        DiscordEvent.GUILD_MEMBER_ADD -> {
-            val member = jsonMapper.treeToValue<GuildMemberAdd>(data)
-            eventListener.onGuildMemberAdd(member)
-        }
-        DiscordEvent.GUILD_MEMBER_UPDATE -> {
-            val member = jsonMapper.treeToValue<GuildMemberUpdate>(data)
-            eventListener.onGuildMemberUpdate(member)
-        }
-        DiscordEvent.GUILD_MEMBER_DELETE -> {
-            val member = jsonMapper.treeToValue<GuildMemeberRemove>(data)
-            eventListener.onGuildMemberRemove(member)
-        }
-        DiscordEvent.GUILD_MEMBERS_CHUNK -> {
-            val members = jsonMapper.treeToValue<GuildMembersChunk>(data)
-            eventListener.onGuildMemberChunk(members)
-        }
-        DiscordEvent.GUILD_ROLE_CREATE -> {
-            val role = jsonMapper.treeToValue<GuildRoleCreate>(data)
-            eventListener.onGuildRoleCreate(role)
-        }
-        DiscordEvent.GUILD_ROLE_UPDATE -> {
-            val role = jsonMapper.treeToValue<GuildRoleUpdate>(data)
-            eventListener.onGuildRoleUpdate(role)
-        }
-        DiscordEvent.GUILD_ROLE_DELETE -> {
-            val role = jsonMapper.treeToValue<GuildRoleDelete>(data)
-            eventListener.onGuildRoleDelete(role)
-        }
-        DiscordEvent.MESSAGE_CREATE -> {
-            val message = jsonMapper.treeToValue<Message>(data)
-            eventListener.onMessageCreate(message)
-        }
-        DiscordEvent.MESSAGE_UPDATE -> {
-            val message = jsonMapper.treeToValue<MessageUpdate>(data)
-            eventListener.onMessageUpdate(message)
-        }
-        DiscordEvent.MESSAGE_DELETE -> {
-            val message = jsonMapper.treeToValue<MessageDelete>(data)
-            eventListener.onMessageDelete(message)
-        }
-        DiscordEvent.MESSAGE_DELETE_BULK -> {
-            val messages = jsonMapper.treeToValue<BulkMessageDelete>(data)
-            eventListener.onMessageBulkDelete(messages)
-        }
-        DiscordEvent.MESSAGE_REACTION_ADD -> {
-            val reaction = jsonMapper.treeToValue<MessageReaction>(data)
-            eventListener.onMessageReactionAdd(reaction)
-        }
-        DiscordEvent.MESSAGE_REACTION_REMOVE -> {
-            val reaction = jsonMapper.treeToValue<MessageReaction>(data)
-            eventListener.onMessageReactionRemove(reaction)
-        }
-        DiscordEvent.MESSAGE_REACTION_REMOVE_ALL -> {
-            val removeReactions = jsonMapper.treeToValue<MessageReactionRemoveAll>(data)
-            eventListener.onMessageReactionRemoveAll(removeReactions)
-        }
-        DiscordEvent.PRESENCE_UPDATE -> {
-            val presenceUpdate = jsonMapper.treeToValue<PresenceUpdate>(data)
-            eventListener.onPresenceUpdate(presenceUpdate)
-        }
-        DiscordEvent.TYPING_START -> {
-            val typingStart = jsonMapper.treeToValue<TypingStart>(data)
-            eventListener.onTypingStart(typingStart)
-        }
-        DiscordEvent.USER_UPDATE -> {
-            val user = jsonMapper.treeToValue<User>(data)
-            eventListener.onUserUpdate(user)
-        }
-        DiscordEvent.VOICE_STATE_UPDATE -> {
-            val voiceState = jsonMapper.treeToValue<VoiceState>(data)
-            eventListener.onVoiceStateUpdate(voiceState)
-        }
-        DiscordEvent.VOICE_SERVER_UPDATE -> {
-            val voiceServerUpdate = jsonMapper.treeToValue<VoiceServerUpdate>(data)
-            eventListener.onVoiceServerUpdate(voiceServerUpdate)
-        }
-        DiscordEvent.WEBHOOKS_UPDATE -> {
-            val webhooksUpdate = jsonMapper.treeToValue<WebhookUpdate>(data)
-            eventListener.onWebhooksUpdate(webhooksUpdate)
-        }
+        DiscordEvent.READY -> fireEvent(ctx, eventListener::onReady, ::ReadyData)
+        DiscordEvent.RESUMED -> fireEvent(ctx, eventListener::onResumed, ::ResumedData)
+        DiscordEvent.CHANNEL_CREATE -> fireEvent(ctx, eventListener::onChannelCreate, ::ChannelCreateData)
+        DiscordEvent.CHANNEL_UPDATE -> fireEvent(ctx, eventListener::onChannelUpdate, ::ChannelUpdateData)
+        DiscordEvent.CHANNEL_DELETE -> fireEvent(ctx, eventListener::onChannelDelete, ::ChannelDeleteData)
+        DiscordEvent.CHANNEL_PINS_UPDATE -> fireEvent(ctx, eventListener::onChannelPinsUpdate, ::ChannelPinsUpdateData)
+        DiscordEvent.GUILD_CREATE -> fireEvent(ctx, eventListener::onGuildCreate, ::GuildCreateData)
+        DiscordEvent.GUILD_UPDATE -> fireEvent(ctx, eventListener::onGuildUpdate, ::GuildUpdateData)
+        DiscordEvent.GUILD_DELETE -> fireEvent(ctx, eventListener::onGuildDelete, ::GuildDeleteData)
+        DiscordEvent.GUILD_BAN_ADD -> fireEvent(ctx, eventListener::onGuildBanAdd, ::GuildBanAddData)
+        DiscordEvent.GUILD_BAN_REMOVE -> fireEvent(ctx, eventListener::onGuildBanRemove, ::GuildBanRemoveData)
+        DiscordEvent.GUILD_EMOJIS_UPDATE -> fireEvent(ctx, eventListener::onGuildEmojiUpdate, ::GuildEmojisUpdateData)
+        DiscordEvent.GUILD_INTEGRATIONS_UPDATE -> fireEvent(ctx, eventListener::onGuildIntegrationsUpdate, ::GuildIntegrationsUpdateData)
+        DiscordEvent.GUILD_MEMBER_ADD -> fireEvent(ctx, eventListener::onGuildMemberAdd, ::GuildMemberAddData)
+        DiscordEvent.GUILD_MEMBER_UPDATE -> fireEvent(ctx, eventListener::onGuildMemberUpdate, ::GuildMemberUpdateData)
+        DiscordEvent.GUILD_MEMBER_DELETE -> fireEvent(ctx, eventListener::onGuildMemberRemove, ::GuildMemberDeleteData)
+        DiscordEvent.GUILD_MEMBERS_CHUNK -> fireEvent(ctx, eventListener::onGuildMemberChunk, ::GuildMembersChunkData)
+        DiscordEvent.GUILD_ROLE_CREATE -> fireEvent(ctx, eventListener::onGuildRoleCreate, ::GuildRoleCreateData)
+        DiscordEvent.GUILD_ROLE_UPDATE -> fireEvent(ctx, eventListener::onGuildRoleUpdate, ::GuildRoleUpdateData)
+        DiscordEvent.GUILD_ROLE_DELETE -> fireEvent(ctx, eventListener::onGuildRoleDelete, ::GuildRoleDeleteData)
+        DiscordEvent.MESSAGE_CREATE -> fireEvent(ctx, eventListener::onMessageCreate, ::MessageCreateData)
+        DiscordEvent.MESSAGE_UPDATE -> fireEvent(ctx, eventListener::onMessageUpdate, ::MessageUpdateData)
+        DiscordEvent.MESSAGE_DELETE -> fireEvent(ctx, eventListener::onMessageDelete, ::MessageDeleteData)
+        DiscordEvent.MESSAGE_DELETE_BULK -> fireEvent(ctx, eventListener::onMessageBulkDelete, ::MessageDeleteBulkData)
+        DiscordEvent.MESSAGE_REACTION_ADD -> fireEvent(ctx, eventListener::onMessageReactionAdd, ::MessageReactionAddData)
+        DiscordEvent.MESSAGE_REACTION_REMOVE -> fireEvent(ctx, eventListener::onMessageReactionRemove, ::MessageReactionRemoveData)
+        DiscordEvent.MESSAGE_REACTION_REMOVE_ALL -> fireEvent(ctx, eventListener::onMessageReactionRemoveAll, ::MessageReactionRemoveAllData)
+        DiscordEvent.PRESENCE_UPDATE -> fireEvent(ctx, eventListener::onPresenceUpdate, ::PresenceUpdateData)
+        DiscordEvent.TYPING_START -> fireEvent(ctx, eventListener::onTypingStart, ::TypingStartData)
+        DiscordEvent.USER_UPDATE -> fireEvent(ctx, eventListener::onUserUpdate, ::UserUpdateData)
+        DiscordEvent.VOICE_STATE_UPDATE -> fireEvent(ctx, eventListener::onVoiceStateUpdate, ::VoiceStateUpdateData)
+        DiscordEvent.VOICE_SERVER_UPDATE -> fireEvent(ctx, eventListener::onVoiceServerUpdate, ::VoiceServerUpdateData)
+        DiscordEvent.WEBHOOKS_UPDATE -> fireEvent(ctx, eventListener::onWebhooksUpdate, ::WebhooksUpdateData)
     }
 }
