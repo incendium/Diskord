@@ -33,5 +33,8 @@ enum class DiscordEvent {
     USER_UPDATE,
     VOICE_STATE_UPDATE,
     VOICE_SERVER_UPDATE,
-    WEBHOOKS_UPDATE
+    WEBHOOKS_UPDATE,
+
+    // only for handling (not dispatching) events
+    ANY
 }

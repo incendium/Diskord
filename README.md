@@ -70,6 +70,16 @@ const val BOT_TOKEN = "A-Totally-Real-Discord-Bot-Token"
 
 fun main(args: Array<String>) {
     bot(BOT_TOKEN) {
+        events {
+            any { eventType, data, clients ->
+                println("We got an event")
+            }
+
+            typingStart { eventType, data, clients ->
+                println("Someone started typing something")
+            }
+        }
+
         commands {
             command("ping") { params, authorId, channel, clients ->
                 channel.sendMessage("pong")
