@@ -2,10 +2,9 @@ package com.jessecorbett.diskord.internal
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.treeToValue
-import com.jessecorbett.diskord.*
-import com.jessecorbett.diskord.api.gateway.events.DiscordEvent
+import com.jessecorbett.diskord.EventListener
+import com.jessecorbett.diskord.api.websocket.events.DiscordEvent
 import com.jessecorbett.diskord.event.*
-import com.jessecorbett.diskord.event.EventData
 
 private data class EventContext(val eventListener: EventListener, val event: DiscordEvent, val data: JsonNode)
 

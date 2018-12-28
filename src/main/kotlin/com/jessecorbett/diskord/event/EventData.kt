@@ -1,13 +1,7 @@
 package com.jessecorbett.diskord.event
 
-import com.jessecorbett.diskord.api.Channel
-import com.jessecorbett.diskord.api.Guild
-import com.jessecorbett.diskord.api.Message
-import com.jessecorbett.diskord.api.User
-import com.jessecorbett.diskord.api.gateway.events.*
-import com.jessecorbett.diskord.api.models.BulkMessageDelete
-import com.jessecorbett.diskord.api.models.MessageDelete
-import com.jessecorbett.diskord.api.models.VoiceState
+import com.jessecorbett.diskord.api.model.*
+import com.jessecorbett.diskord.api.websocket.events.*
 
 sealed class EventData
 data class ReadyData(val data: Ready) : EventData()
