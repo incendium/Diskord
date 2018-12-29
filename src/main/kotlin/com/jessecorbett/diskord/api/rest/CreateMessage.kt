@@ -87,4 +87,4 @@ fun Embed.footer(text: String, block: EmbedFooter.() -> Unit) {
 
 fun Embed.fields(block: MutableList<EmbedField>.() -> Unit) = fields.apply(block)
 
-fun MutableList<EmbedField>.field(name: String, value: String, inline: Boolean) = add(EmbedField(name, value, inline))
+fun MutableList<EmbedField>.field(name: String, value: String, inline: Boolean = false) = add(EmbedField(name, value, inline))
