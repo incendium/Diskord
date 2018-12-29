@@ -1,5 +1,5 @@
 group = "com.jessecorbett"
-version = "0.2.2-SNAPSHOT"
+version = "0.3.1-SNAPSHOT"
 
 val kotlinVersion: String by project
 val kotlinCoroutinesVersion: String by project
