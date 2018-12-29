@@ -57,5 +57,6 @@ suspend fun dispatchEvent(eventListener: EventListener, event: DiscordEvent, dat
         DiscordEvent.VOICE_STATE_UPDATE -> fireEvent(ctx, eventListener::onVoiceStateUpdate, ::VoiceStateUpdateData)
         DiscordEvent.VOICE_SERVER_UPDATE -> fireEvent(ctx, eventListener::onVoiceServerUpdate, ::VoiceServerUpdateData)
         DiscordEvent.WEBHOOKS_UPDATE -> fireEvent(ctx, eventListener::onWebhooksUpdate, ::WebhooksUpdateData)
+        else -> throw IllegalArgumentException("Unable to dispatch $event event.")
     }
 }
