@@ -20,24 +20,24 @@ class Bot constructor(val token: String) : EventListener() {
     private val clientStore = ClientStore(token)
     private val webSocket = DiscordWebSocket(token, this)
 
-    val commands = mutableListOf<CommandGroup>()
-    val events = mutableMapOf<DiscordEvent?, List<EventHandler<EventData>>>()
+    val commandGroups = mutableListOf<CommandGroup>()
+    val eventHandlers = mutableMapOf<DiscordEvent, List<EventHandler<EventData>>>()
     val responses = ArrayList<String>()
 
     override suspend fun onEvent(event: DiscordEvent, data: EventData) {
         LOG.debug("Incoming Event ({}) --> {}", event, data)
-        LOG.trace("events = {}", events)
+        LOG.trace("eventHandlers = {}", eventHandlers)
 
-        events[DiscordEvent.ANY]?.forEach { handler ->
+        eventHandlers[DiscordEvent.ANY]?.forEach { handler ->
             handler(event, data, clientStore)
         }
-        events[event]?.forEach { handler ->
+        eventHandlers[event]?.forEach { handler ->
             handler(event, data, clientStore)
         }
     }
 
     override suspend fun onMessageCreate(message: Message) {
-        commands.forEach { group ->
+        commandGroups.forEach { group ->
             if (message.content.startsWith(group.prefix)) {
                 val tokens = message.content.split(" ")
                 for (command in group.commands) {
@@ -55,7 +55,7 @@ typealias Command = suspend (List<String>, String, ChannelClient, ClientStore) -
 data class CommandGroup(val prefix: CharSequence, val commands: MutableMap<String, Command> = mutableMapOf())
 
 typealias EventHandler<T> = suspend (DiscordEvent, T, ClientStore) -> Unit
-data class EventHandlerGroup(val handlers: MutableMap<DiscordEvent?, MutableList<EventHandler<EventData>>> = mutableMapOf())
+data class EventHandlerGroup(val handlers: MutableMap<DiscordEvent, MutableList<EventHandler<EventData>>> = mutableMapOf())
 
 fun bot(token: String, block: Bot.() -> Unit) = Bot(token).apply(block)
 
@@ -64,7 +64,7 @@ fun Bot.commands(prefix: Char = '!', block: CommandGroup.() -> Unit) = commands(
 fun Bot.commands(prefix: CharSequence = "!", block: CommandGroup.() -> Unit) {
     val group = CommandGroup(prefix)
     group.apply(block)
-    commands += group
+    commandGroups += group
 }
 
 fun CommandGroup.command(command: String, action: Command) {
@@ -74,7 +74,7 @@ fun CommandGroup.command(command: String, action: Command) {
 fun Bot.events(block: EventHandlerGroup.() -> Unit) {
     val group = EventHandlerGroup()
     group.apply(block)
-    events += group.handlers
+    eventHandlers += group.handlers
 }
 
 private fun <T: EventData> EventHandlerGroup.event(event: DiscordEvent, action: EventHandler<T>) {
